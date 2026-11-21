@@ -15,10 +15,10 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle saved) {
         super.onCreate(saved);
-        getWindow().setStatusBarColor(Color.parseColor("#160a24"));
-        getWindow().setNavigationBarColor(Color.parseColor("#160a24"));
+        getWindow().setStatusBarColor(Color.parseColor("#0c0618"));
+        getWindow().setNavigationBarColor(Color.parseColor("#0c0618"));
         web = new WebView(this);
-        web.setBackgroundColor(Color.parseColor("#160a24"));
+        web.setBackgroundColor(Color.parseColor("#0c0618"));
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);   // keeps streaks and stats

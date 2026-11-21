@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Where Is It?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: playful party-puzzle, a bit spooky/festive depending on theme
+   IDEA: a printed puzzle card on a themed night-sky poster, like the viral "Harder than you think" posts
+   PICTURE: the A–F row card itself, big and tappable, under a modest title
+   COLOUR and TYPE: each theme sets one deep ground + one accent; white card; 6 bright word inks; Fredoka + Nunito (rounded)
+   LAYOUT: title, question, clues, row card, word tray, answer bar; single column, max 560px */
+:root{color-scheme:light dark;--bg:#2a1440;--bg2:#160a24;--acc:#ff8a1f;--card:#fffdf8;--ink:#1d1726;--mut:#6b6478;--line:#1d1726}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;min-height:100vh;color:#fff;font:16px/1.5 Nunito,system-ui,sans-serif;overflow-x:clip;
+ background:radial-gradient(circle at 20% 10%,rgba(255,255,255,.12) 0 2px,transparent 3px) 0 0/90px 90px,
+ radial-gradient(circle at 70% 60%,rgba(255,255,255,.09) 0 1.5px,transparent 2.5px) 0 0/130px 130px,
+ linear-gradient(180deg,var(--bg),var(--bg2));background-attachment:fixed;transition:background .4s}
+.wrap{max-width:560px;margin:0 auto;padding:18px 14px 40px}
+h1{font:700 clamp(30px,8vw,44px)/1.05 Fredoka,sans-serif;margin:4px 0 2px;letter-spacing:.5px}
+h1 span{color:var(--acc)}
+.sub{color:rgba(255,255,255,.75);margin:0 0 14px;font-size:15px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.seg{display:flex;background:rgba(255,255,255,.12);border-radius:999px;padding:3px}
+.seg button{border:0;background:none;color:#fff;font:600 15px Fredoka,sans-serif;padding:9px 14px;border-radius:999px;min-height:40px;cursor:pointer}
+.seg button.on{background:var(--acc);color:#1d1726}
+.timer{margin-left:auto;font:600 18px Fredoka,sans-serif;font-variant-numeric:tabular-nums;background:rgba(0,0,0,.25);padding:6px 14px;border-radius:999px}
+.card{background:var(--card);color:var(--ink);border-radius:24px;padding:18px;box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.theme{font:600 14px Fredoka,sans-serif;color:var(--mut);display:flex;justify-content:space-between}
+.q{font:700 clamp(28px,7vw,38px)/1.1 Fredoka,sans-serif;margin:6px 0 12px}
+.clues{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:6px}
+.clues li{font:700 17px/1.3 Nunito,sans-serif;padding:10px 12px;border-radius:14px;background:#f3eff7;cursor:pointer;user-select:none;transition:opacity .2s}
+.clues li.x{opacity:.35;text-decoration:line-through}
+.w{font-family:Fredoka,sans-serif;font-weight:700;letter-spacing:.3px}
+.grid{border:3px solid var(--line);border-radius:16px;overflow:hidden}
+.row{display:grid;grid-template-columns:48px minmax(0,1fr);min-height:56px;border-top:3px solid var(--line)}
+.row:first-child{border-top:0}
+.row .l{display:grid;place-items:center;font:700 22px Fredoka,sans-serif;border-right:3px solid var(--line);background:#f6f2ea}
+.slot{border:0;background:#fff;font:700 22px Fredoka,sans-serif;letter-spacing:2px;text-align:center;cursor:pointer;min-height:52px;color:var(--ink)}
+.slot:focus-visible,.chip:focus-visible,button:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.slot.empty{color:#c9c2d4;font-size:15px;letter-spacing:0;font-family:Nunito,sans-serif}
+.slot.ok{background:#e3f6e5}.slot.bad{background:#fde4e4}
+.tray{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px;min-height:48px}
+.chip{border:2px solid currentColor;background:#fff;border-radius:999px;padding:8px 14px;font:700 16px Fredoka,sans-serif;min-height:44px;cursor:pointer}
+.chip.sel{background:currentColor}.chip.sel b{color:#fff}
+.hint{font-size:13px;color:var(--mut);margin:4px 0 0}
+.ans{margin-top:16px;padding-top:14px;border-top:2px dashed #ddd5e6}
+.ans p{margin:0 0 8px;font-weight:800}
+.letters{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.letters button{min-height:48px;border-radius:14px;border:2px solid var(--line);background:#fff;font:700 20px Fredoka,sans-serif;cursor:pointer;color:var(--ink)}
+.letters button.on{background:var(--ink);color:#fff}
+.acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn{flex:1;min-height:48px;border:0;border-radius:14px;font:600 17px Fredoka,sans-serif;cursor:pointer;background:var(--acc);color:#1d1726;padding:0 14px}
+.btn.ghost{background:#efeaf4;color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:default}
+.res{margin-top:14px;padding:14px;border-radius:16px;font-weight:700;display:none}
+.res.show{display:block}.res.win{background:#e3f6e5}.res.lose{background:#fde4e4}
+.res h3{margin:0 0 4px;font:700 22px Fredoka,sans-serif}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:16px;text-align:center}
+.stats div{background:rgba(255,255,255,.1);border-radius:16px;padding:10px 4px}
+.stats b{display:block;font:700 24px Fredoka,sans-serif}
+.stats small{font-size:13px;color:rgba(255,255,255,.75)}
+.codeform{display:flex;gap:8px;margin-top:14px}.codeform input{flex:1;min-height:48px;border-radius:14px;border:0;padding:0 14px;font:16px Nunito,sans-serif}.codeform .btn{flex:none}
+.how{margin-top:16px;color:rgba(255,255,255,.8);font-size:15px}
+.how summary{cursor:pointer;font:600 16px Fredoka,sans-serif;color:#fff}
+@media(prefers-reduced-motion:no-preference){.pop{animation:pop .35s ease}@keyframes pop{0%{transform:scale(.96)}60%{transform:scale(1.02)}100%{transform:none}}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Where Is <span>It?</span></h1>
+  <p class="sub">Harder than you think. Use the clues, place the words, find the hidden one.</p>
+  <div class="bar">
+    <div class="seg" id="mode"><button data-v="daily" class="on">Daily</button><button data-v="practice">Practice</button></div>
+    <div class="seg" id="diff"><button data-v="easy">Easy</button><button data-v="medium" class="on">Medium</button><button data-v="hard">Hard</button></div>
+    <div class="timer" id="timer">0:00</div>
+  </div>
+  <div class="card" id="card">
+    <div class="theme"><span id="themeName"></span><span id="pzId"></span></div>
+    <div class="q" id="q"></div>
+    <ul class="clues" id="clues"></ul>
+    <div class="grid" id="grid"></div>
+    <div class="tray" id="tray"></div>
+    <p class="hint">Tap a word, then a row. Tap a placed word to pick it up. Tap a clue to cross it off.</p>
+    <div class="ans">
+      <p id="askLine"></p>
+      <div class="letters" id="letters"></div>
+      <div class="acts">
+        <button class="btn ghost" id="check">Check my grid</button>
+        <button class="btn" id="lock" disabled>Lock in</button>
+      </div>
+      <div class="res" id="res"></div>
+    </div>
+  </div>
+  <div class="stats" id="stats"></div>
+  <form class="codeform" id="codeform"><input id="codein" placeholder="Got a friend's puzzle code?" autocomplete="off" aria-label="Puzzle code"><button class="btn" type="submit">Play it</button></form>
+  <details class="how"><summary>How to play</summary>
+    <p>Finished a Practice puzzle? Share it and your friends get your exact puzzle via its code.</p>
+    <p>Six words sit in rows A to F, one per row. The clues never mention the word you're asked about, so you have to place everything else and find it by elimination. "Between" means somewhere between, not necessarily right next to. "Just above" means the row directly above. You get one go at the answer. "Check my grid" marks your placed words right or wrong, but it's counted against you.</p>
+    <p>Daily puzzles are the same for everyone on the same date. Practice gives you endless new ones.</p>
+  </details>
+</div>
+<script>
+{
+const $=id=>document.getElementById(id);
+const L='ABCDEF';
+const INKS=['#c62828','#2e7d32','#d46a00','#7b3fa0','#c2185b','#1565c0'];
+const THEMES=[
+ {n:'Halloween',bg:'#2a1440',bg2:'#120821',acc:'#ff8a1f',w:['MOON','BLOOD','WITCH','VAMPIRE','TREAT','GHOST','TRICK','BROOM','SKULL','SPIDER','CAULDRON','ZOMBIE']},
+ {n:'Christmas',bg:'#0f3d2e',bg2:'#06201a',acc:'#ff5d5d',w:['SANTA','ELF','REINDEER','SLEIGH','STAR','SNOW','CANDLE','BELLS','STOCKING','TINSEL','HOLLY','PUDDING']},
+ {n:'Space',bg:'#0b1a3a',bg2:'#040a1c',acc:'#ffd166',w:['ROCKET','COMET','MARS','ALIEN','ORBIT','SATURN','NEBULA','ASTEROID','PLUTO','GALAXY','METEOR','LUNAR']},
+ {n:'Football',bg:'#0f5132',bg2:'#062616',acc:'#c6f432',w:['STRIKER','KEEPER','REFEREE','CORNER','PENALTY','OFFSIDE','HEADER','VOLLEY','TROPHY','PITCH','CAPTAIN','DERBY']},
+ {n:'Seaside',bg:'#0c4a6e',bg2:'#052235',acc:'#ffb703',w:['PIER','CRAB','SEAGULL','BUCKET','SPADE','DECKCHAIR','LIGHTHOUSE','WAVE','SANDCASTLE','ROCKPOOL','KITE','DONKEY']},
+ {n:'Tea Time',bg:'#7c2d12',bg2:'#3a1206',acc:'#fde68a',w:['TOAST','KETTLE','GRAVY','CRUMPET','SCONE','PASTY','TRIFLE','MUFFIN','BISCUIT','CUSTARD','TEAPOT','JAM']}
+];
+function rngFrom(seed){let a=seed>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hash(s){let h=2166136261;for(const c of s)h=Math.imul(h^c.charCodeAt(0),16777619);return h>>>0}
+function shuffle(a,r){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+const PERMS=[];(function p(a,k){if(k===6){PERMS.push(a.slice());return}for(let i=k;i<6;i++){[a[k],a[i]]=[a[i],a[k]];p(a,k+1);[a[k],a[i]]=[a[i],a[k]]}})([0,1,2,3,4,5],0);
+
+// clue kinds: f(P) where P[word]=row
+const K={
+ exact:{w:[3,1,0],f:(P,c)=>P[c.s]===c.r,t:c=>`is in Row ${L[c.r]}`},
+ not:{w:[1,2,2],f:(P,c)=>P[c.s]!==c.r,t:c=>`is not in Row ${L[c.r]}`},
+ top:{w:[3,1,0],f:(P,c)=>P[c.s]===0,t:()=>'is in the top row'},
+ last:{w:[3,1,0],f:(P,c)=>P[c.s]===5,t:()=>'is in the last row'},
+ middle:{w:[2,2,1],f:(P,c)=>P[c.s]===2||P[c.s]===3,t:()=>'is in one of the middle rows'},
+ edge:{w:[1,1,1],f:(P,c)=>P[c.s]===0||P[c.s]===5,t:()=>'is in the top or bottom row'},
+ tophalf:{w:[1,1,1],f:(P,c)=>P[c.s]<3,t:()=>'is in the top half'},
+ bothalf:{w:[1,1,1],f:(P,c)=>P[c.s]>2,t:()=>'is in the bottom half'},
+ vowel:{w:[0,1,1],f:(P,c)=>P[c.s]===0||P[c.s]===4,t:()=>'is in a vowel row'},
+ jabove:{w:[3,2,1],f:(P,c)=>P[c.s]===P[c.o]-1,t:(c,n)=>`is just above ${n(c.o)}`},
+ jbelow:{w:[3,2,1],f:(P,c)=>P[c.s]===P[c.o]+1,t:(c,n)=>`is just below ${n(c.o)}`},
+ above:{w:[1,2,2],f:(P,c)=>P[c.s]<P[c.o],t:(c,n)=>`is somewhere above ${n(c.o)}`},
+ below:{w:[1,2,2],f:(P,c)=>P[c.s]>P[c.o],t:(c,n)=>`is somewhere below ${n(c.o)}`},
+ next:{w:[1,2,2],f:(P,c)=>Math.abs(P[c.s]-P[c.o])===1,t:(c,n)=>`is next to ${n(c.o)}`},
+ notnext:{w:[0,1,2],f:(P,c)=>Math.abs(P[c.s]-P[c.o])>1,t:(c,n)=>`is not next to ${n(c.o)}`},
+ two:{w:[0,1,2],f:(P,c)=>Math.abs(P[c.s]-P[c.o])===2,t:(c,n)=>`is exactly two rows from ${n(c.o)}`},
+ between:{w:[2,2,2],f:(P,c)=>{const a=P[c.o],b=P[c.u];return P[c.s]>Math.min(a,b)&&P[c.s]<Math.max(a,b)},t:(c,n)=>`is between ${n(c.o)} and ${n(c.u)}`}
+};
+const UN=['exact','not','top','last','middle','edge','tophalf','bothalf','vowel'],BI=['jabove','jbelow','above','below','next','notnext','two'];
+
+function build(sol,tg,d,r){
+  const pool=[],ok=(c)=>K[c.k].f(sol,c);
+  for(let s=0;s<6;s++){if(s===tg)continue;
+    for(const k of UN){if(k==='exact'||k==='not'){for(let x=0;x<6;x++){const c={k,s,r:x};if(ok(c))pool.push(c)}}else{const c={k,s};if(ok(c))pool.push(c)}}
+    for(let o=0;o<6;o++){if(o===s||o===tg)continue;for(const k of BI){const c={k,s,o};if(ok(c))pool.push(c)}
+      for(let u=o+1;u<6;u++){if(u===s||u===tg)continue;const c={k:'between',s,o,u};if(ok(c))pool.push(c)}}}
+  const order=pool.map(c=>({c,key:K[c.k].w[d]?r()**(1/K[c.k].w[d]):-1})).filter(x=>x.key>=0).sort((a,b)=>b.key-a.key).map(x=>x.c);
+  let cand=PERMS,sel=[];
+  for(const c of order){const nc=cand.filter(P=>K[c.k].f(P,c));if(nc.length&&nc.length<cand.length){sel.push(c);cand=nc;if(cand.length===1)break}}
+  if(cand.length!==1)return null;
+  if(d>0){for(const c of shuffle(sel,r)){const rest=sel.filter(x=>x!==c);if(PERMS.filter(P=>rest.every(x=>K[x.k].f(P,x))).length===1)sel=rest}}
+  return shuffle(sel,r);
+}
+function make(seed,d,themeIdx){
+  const r=rngFrom(seed);
+  const th=THEMES[themeIdx??Math.floor(r()*THEMES.length)];
+  for(let tries=0;tries<80;tries++){
+    const words=shuffle(th.w,r).slice(0,6),sol=PERMS[Math.floor(r()*720)],tg=Math.floor(r()*6);
+    const clues=build(sol,tg,tries>60?Math.max(0,d-1):d,r);
+    if(clues&&clues.length>=3)return{th,words,sol,tg,clues};
+  }
+}
+
+// state
+const today=new Date(),dkey=today.toISOString().slice(0,10),dayNo=Math.floor(today/864e5);
+const store={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let mode='daily',diff=1,G,place,sel,struck,pick,done,checks,t0,tick;
+const DN=['Easy','Medium','Hard'];
+const PLAY_URL='https://claude.ai/artifact/DkwTq5cJzsBs9Kf9q7iRfs';
+let seedNow=0,fixedSeed=null;
+function readHash(){const m=/^#p([0-9a-z]+)-([0-2])$/.exec(location.hash||'');if(m){fixedSeed=parseInt(m[1],36)>>>0;diff=+m[2];mode='practice';
+ [...$('mode').children].forEach(x=>x.classList.toggle('on',x.dataset.v==='practice'));[...$('diff').children].forEach((x,i)=>x.classList.toggle('on',i===diff))}}
+
+function start(){
+  const seed=mode==='daily'?hash(dkey+diff):(fixedSeed??((Math.random()*2**32)>>>0));fixedSeed=null;seedNow=seed;
+  G=make(seed,diff,mode==='daily'?dayNo%THEMES.length:null);
+  place=Array(6).fill(-1);sel=-1;struck=new Set();pick=-1;done=null;checks=0;
+  const r=document.documentElement.style;r.setProperty('--bg',G.th.bg);r.setProperty('--bg2',G.th.bg2);r.setProperty('--acc',G.th.acc);
+  $('themeName').textContent=G.th.n+' · '+DN[diff];
+  $('pzId').textContent=mode==='daily'?'Daily · '+dkey:'Code '+code();
+  $('q').innerHTML=`Where is ${wd(G.tg)}?`;
+  $('askLine').innerHTML=`${wd(G.tg)} is in Row…`;
+  const saved=mode==='daily'&&store.get('wii-'+dkey+'-'+diff,null);
+  clearInterval(tick);t0=Date.now();
+  if(saved){done=saved;place=G.sol.map((_,i)=>i).sort((a,b)=>G.sol[a]-G.sol[b]);pick=saved.pick;checks=saved.checks}
+  else tick=setInterval(()=>$('timer').textContent=fmt(Date.now()-t0),500);
+  $('timer').textContent=fmt(saved?saved.ms:0);
+  render();$('card').classList.remove('pop');void $('card').offsetWidth;$('card').classList.add('pop');
+}
+const code=()=>'p'+seedNow.toString(36)+'-'+diff;
+const fmt=ms=>{const s=Math.floor(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+const wd=i=>`<span class="w" style="color:${INKS[i]}">${G.words[i]}</span>`;
+const nm=i=>`<b>${G.words[i][0]+G.words[i].slice(1).toLowerCase()}</b>`;
+
+function render(){
+  $('clues').innerHTML=G.clues.map((c,i)=>`<li data-i="${i}" class="${struck.has(i)?'x':''}">${wd(c.s)} ${K[c.k].t(c,nm)}</li>`).join('');
+  $('grid').innerHTML=place.map((w,row)=>`<div class="row"><div class="l">${L[row]}</div><button class="slot ${w<0?'empty':''}" data-r="${row}" style="${w>=0?'color:'+INKS[w]:''}" aria-label="Row ${L[row]}">${w<0?(sel>=0&&!done?'tap to place':''):G.words[w]}</button></div>`).join('');
+  const unplaced=G.words.map((_,i)=>i).filter(i=>!place.includes(i));
+  $('tray').innerHTML=done?'':unplaced.map(i=>`<button class="chip ${sel===i?'sel':''}" data-w="${i}" style="color:${INKS[i]}"><b style="color:${sel===i?'#fff':INKS[i]}">${G.words[i]}</b></button>`).join('');
+  $('letters').innerHTML=[...L].map((x,i)=>`<button data-a="${i}" class="${pick===i?'on':''}" ${done?'disabled':''}>${x}</button>`).join('');
+  $('lock').disabled=pick<0||!!done;$('check').disabled=!!done;
+  const res=$('res');
+  if(done){const win=done.win;res.className='res show '+(win?'win':'lose');
+    res.innerHTML=`<h3>${win?'Nailed it.':'Not this time.'}</h3>${wd(G.tg)} was in Row ${L[G.sol[G.tg]]}. ${win?'Solved':'Finished'} in ${fmt(done.ms)}${done.checks?` with ${done.checks} grid check${done.checks>1?'s':''}`:''}. The full grid is shown above.
+    <div class="acts"><button class="btn ghost" id="share">Share result</button><button class="btn" id="next">${mode==='daily'?'Play practice':'Next puzzle'}</button></div><textarea id="shareBox" hidden rows="6" style="width:100%;margin-top:8px;font:14px Nunito,sans-serif;border-radius:12px;padding:8px"></textarea>`;
+    [...$('grid').querySelectorAll('.slot')].forEach(s=>s.classList.add(+s.dataset.r===G.sol[G.tg]?'ok':'x'));
+  }else{res.className='res';res.innerHTML=''}
+  stats();
+}
+function stats(){
+  const s=store.get('wii-stats',{p:0,w:0,st:0,best:0});
+  $('stats').innerHTML=[['Played',s.p],['Win %',s.p?Math.round(s.w/s.p*100):0],['Streak',s.st],['Best',s.best]].map(([a,b])=>`<div><b>${b}</b><small>${a}</small></div>`).join('');
+}
+function shareText(){
+  const rows=[...L].map((x,i)=>i===G.sol[G.tg]?(done.win?'🟩':'🟥'):(i===done.pick?'🟨':'⬜')).join('');
+  const head=mode==='daily'?`Daily ${dkey}`:`Puzzle ${code()}`;
+  return `Where Is It? ${G.th.n} · ${DN[diff]}\n${head}\n${rows}\n${done.win?'Found':'Missed'} ${G.words[G.tg]} in ${fmt(done.ms)}${done.checks?` · ${done.checks} check${done.checks>1?'s':''}`:' · no checks'}\n`+
+   (mode==='daily'?`Can you beat me? ${PLAY_URL}`:`Try the same puzzle: ${PLAY_URL}#${code()}`);
+}
+function share(b){
+  const t=shareText();
+  if(window.Android&&Android.share){Android.share(t);return}
+  if(navigator.share){navigator.share({text:t}).catch(()=>copy(b,t));return}
+  copy(b,t);
+}
+function copy(b,t){(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>b.textContent='Copied, paste it anywhere',()=>{$('shareBox').hidden=false;$('shareBox').value=t;$('shareBox').select()})}
+function finish(){
+  const ms=Date.now()-t0,win=pick===G.sol[G.tg];clearInterval(tick);
+  done={win,ms,pick,checks};
+  place=G.words.map((_,i)=>i).sort((a,b)=>G.sol[a]-G.sol[b]);
+  if(mode==='daily'){store.set('wii-'+dkey+'-'+diff,done);const s=store.get('wii-stats',{p:0,w:0,st:0,best:0});s.p++;if(win){s.w++;s.st++;s.best=Math.max(s.best,s.st)}else s.st=0;store.set('wii-stats',s)}
+  render();
+}
+
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button,li');if(!b)return;
+  if(b.closest('#mode')){mode=b.dataset.v;[...$('mode').children].forEach(x=>x.classList.toggle('on',x===b));start();return}
+  if(b.closest('#diff')){diff=['easy','medium','hard'].indexOf(b.dataset.v);[...$('diff').children].forEach(x=>x.classList.toggle('on',x===b));start();return}
+  if(b.id==='next'){if(mode==='daily'){mode='practice';[...$('mode').children].forEach(x=>x.classList.toggle('on',x.dataset.v==='practice'))}start();return}
+  if(b.id==='share'){share(b);return}
+  if(done)return;
+  if(b.matches('li[data-i]')){const i=+b.dataset.i;struck.has(i)?struck.delete(i):struck.add(i);render();return}
+  if(b.dataset.w!==undefined){const w=+b.dataset.w;sel=sel===w?-1:w;render();return}
+  if(b.dataset.r!==undefined){const r=+b.dataset.r,cur=place[r];
+    if(sel>=0){place[r]=sel;sel=-1;if(cur>=0&&cur!==place[r])sel=cur}
+    else if(cur>=0){place[r]=-1;sel=cur}
+    $('grid').querySelectorAll('.slot').forEach(s=>s.classList.remove('ok','bad'));render();return}
+  if(b.dataset.a!==undefined){pick=+b.dataset.a;render();return}
+  if(b.id==='lock'&&pick>=0){finish();return}
+  if(b.id==='check'){checks++;render();$('grid').querySelectorAll('.slot').forEach(s=>{const r=+s.dataset.r,w=place[r];if(w>=0)s.classList.add(G.sol[w]===r?'ok':'bad')})}
+});
+$('codeform').addEventListener('submit',e=>{e.preventDefault();const v=$('codein').value.trim().toLowerCase().replace(/^.*#/,'');location.hash=v.startsWith('p')?v:'p'+v;});
+addEventListener('hashchange',()=>{readHash();if(fixedSeed!==null)start()});
+readHash();start();
+}
+</script>
+</body>
+</html>
